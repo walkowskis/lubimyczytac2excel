@@ -1,2 +1,2 @@
 # lubimyczytac2excel
-A script that retrieves the book description from the lubimyczytac.pl website.
+A small script that takes the book description from the lubimyczytac.pl and saves it in an xlsx file.
