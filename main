@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import time
 import openpyxl
 import logging
@@ -19,15 +20,21 @@ f_handler.setFormatter(f_format)
 logger.addHandler(f_handler)
 
 
+
 address = 'http://lubimyczytac.pl/'
-row_from = 1
-row_to = 100
-wb = openpyxl.load_workbook('ebook.xlsx')
+exceldir = ''
+row_from = 
+row_to = 
+wb = openpyxl.load_workbook(exceldir)
 sheet = wb.active
+
+caps = DesiredCapabilities().CHROME
+caps["pageLoadStrategy"] = "none"
 
 logger.info('Przygotowanie...')
 options = webdriver.ChromeOptions()
 options.add_argument('headless')
+options.add_argument('desired_capabilities=caps')
 options.add_argument('--window-size=1920,1080')
 driver = webdriver.Chrome(options=options)
 driver.implicitly_wait(10)
@@ -44,9 +51,17 @@ logger.info('Rozpoczęcie wyszukiwania.')
 counter = 1
 for i in range(row_from, row_to):
     title=sheet.cell(row=i+1,column=2)
+    logger.debug('49')
     search = driver.find_element_by_id('searchInput')
+    logger.debug('50')
     search.send_keys(title.value)
-    search.submit()
+    logger.debug('52')
+    try:
+        search.submit()
+        logger.debug('55')
+    except:
+        logger.warning('Time out (%s)!', title.value)
+        driver.get(driver.current_url)
     try:
         driver.find_elements_by_css_selector('a.bookTitle')[0].click()
         rating_value = driver.find_element_by_id('rating-value').text
@@ -54,7 +69,7 @@ for i in range(row_from, row_to):
         sheet.cell(row=i+1, column=4).value = rating_value
         sheet.cell(row=i+1, column=5).value = rating_votes
         driver.find_element_by_id('aBookDetails').click()
-        logger.info('%s - zapisywanie danych:', title.value)
+        logger.info('%s. %s - zapisywanie danych:', i, title.value)
         category = []
         category_value = []
         for item in driver.find_elements_by_tag_name('dt'):
@@ -86,9 +101,11 @@ for i in range(row_from, row_to):
             logger.info('      - opis.\n')
         except:
             pass
-        wb.save('ebook.xlsx')
+        wb.save(exceldir)
+        logger.info('Ukończono %s procent.\n', round((i - row_from + 1)*100/(row_to - row_from)))
     except:
-        logger.warning('%s - nie znaleziono pozycji!', title.value)
+        logger.warning('%s - nie znaleziono pozycji!\n', title.value)
         counter += 1
         pass
 logger.info('%s z %s pozycji nie zostały odnalezione!', counter-1, (row_to - row_from))
+driver.close()
