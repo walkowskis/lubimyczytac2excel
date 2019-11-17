@@ -21,7 +21,7 @@ logger.addHandler(f_handler)
 
 
 
-address = 'http://lubimyczytac.pl/'
+address = 'https://lubimyczytac.pl/beta/rwdOff'
 exceldir = ''
 row_from = 
 row_to = 
